@@ -51,7 +51,7 @@ function nextSurah() {
 async function playQuran(surahNum) {
   isPlaying = true;
   const response = await fetch(
-    `https://api.alquran.cloud/v1/surah/${surahNum}/ar.alafasy`
+    `https://api.alquran.cloud/v1/surah/${surahNum}/ar.alafasy`,
   );
   const surah = await response.json();
   const ayahs = surah.data.ayahs;
@@ -139,22 +139,21 @@ const btnComplete = document.getElementById("btn-Complete");
 const main = document.querySelector("main");
 
 const addTask = (id, value) => {
-  if (value === "") {
-    value = "Empty Task";
-  }
   const newTaskElement = document.createElement("li");
   newTaskElement.className = "newTask flex";
   newTaskElement.setAttribute("data-id", `${id}`);
   newTaskElement.setAttribute("draggable", true);
-  // newTaskElement.setAttribute("contenteditable", true);
-  newTaskElement.innerHTML = `<p class="taskInput" contenteditable="true">${value}</p>
-<div class="iconsCon">
-<ion-icon
-name="close-circle-outline"
-class="icon deleteIcn"
-></ion-icon>
 
-</div>`;
+  const p = document.createElement("p");
+  p.className = "taskInput";
+  p.setAttribute("contenteditable", "true");
+  p.textContent = value || "Empty Task";
+
+  const iconsCon = document.createElement("div");
+  iconsCon.className = "iconsCon";
+  iconsCon.innerHTML = `<ion-icon name="close-circle-outline" class="icon deleteIcn"></ion-icon>`;
+
+  newTaskElement.append(p, iconsCon);
   return newTaskElement;
 };
 
@@ -204,7 +203,7 @@ main.addEventListener("click", function (e) {
 
     clickedTask.remove();
     console.log(
-      `Task with id ${cardId} and content of: " ${cardValue} " have been removed successfully`
+      `Task with id ${cardId} and content of: " ${cardValue} " have been removed successfully`,
     );
   }
 
@@ -359,7 +358,7 @@ listsC.forEach((list) => {
         localStorage.setItem(`${currentList}`, JSON.stringify(Updatedcards));
         lists[currentList] = Updatedcards;
         console.log(
-          `The Task: "${cardValue}" moved from ${currentList} to ${listType} Successfully`
+          `The Task: "${cardValue}" moved from ${currentList} to ${listType} Successfully`,
         );
       }
     }
@@ -391,7 +390,7 @@ const storedArray = (list) => {
 for (const list in lists) {
   storedArray(list);
   console.log(
-    `${list} elements have parsed successfully from your Local Storage`
+    `${list} elements have parsed successfully from your Local Storage`,
   );
 }
 
@@ -413,7 +412,7 @@ function updateDateAndTime() {
 
   // Time Formating
   const formattedTime = `${fixingTD(hours)} : ${fixingTD(minutes)} : ${fixingTD(
-    seconds
+    seconds,
   )}`;
 
   // Date Formating
