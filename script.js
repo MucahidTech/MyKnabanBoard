@@ -193,13 +193,15 @@ main.addEventListener("click", function (e) {
     const cardValue = clickedTask.querySelector(".taskInput").innerHTML;
 
     const storedCardsArray = localStorage.getItem(`${listType}`);
-    const cards = JSON.parse(storedCardsArray);
-    const Updatedcards = cards.filter((card) => card.id !== cardId);
+    const cards = storedCardsArray ? JSON.parse(storedCardsArray) : [];
+    const Updatedcards = cards.filter((c) => c.id !== cardId);
+
+    lists[listType] = Updatedcards;
     if (Updatedcards.length === 0) {
       localStorage.removeItem(`${listType}`);
-      lists[listType] = [];
+    } else {
+      localStorage.setItem(`${listType}`, JSON.stringify(Updatedcards));
     }
-    localStorage.setItem(`${listType}`, JSON.stringify(Updatedcards));
 
     clickedTask.remove();
     console.log(
