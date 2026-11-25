@@ -19,7 +19,7 @@ const prevBtn = document.querySelector(".backward");
 const nextBtn = document.querySelector(".forward");
 const selectSurah = document.getElementById("surah-selector");
 const audio = document.getElementById("audio");
-let surahNumber = localStorage.getItem("surahNumber") || 112;
+let surahNumber = Number(localStorage.getItem("surahNumber")) || 112;
 selectSurah.selectedIndex = surahNumber - 1;
 let isPlaying;
 
@@ -42,7 +42,7 @@ selectSurah.addEventListener("change", function () {
 function nextSurah() {
   isPlaying = true;
   playPause();
-  surahNumber < 114 ? (surahNumber = +surahNumber + 1) : (surahNumber = 112);
+  surahNumber = surahNumber < 114 ? surahNumber + 1 : 1;
   selectSurah.selectedIndex = surahNumber - 1;
   localStorage.setItem("surahNumber", surahNumber);
   playQuran(surahNumber);
@@ -95,9 +95,9 @@ async function playQuran(surahNum) {
   }
 }
 
-prevBtn.addEventListener("click", function () {
-  playPause();
-  surahNumber -= 1;
+prevBtn.addEventListener("click", () => {
+  playbackToken++;
+  surahNumber = surahNumber > 1 ? surahNumber - 1 : 114;
   selectSurah.selectedIndex = surahNumber - 1;
   localStorage.setItem("surahNumber", surahNumber);
   playQuran(surahNumber);
