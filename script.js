@@ -13,108 +13,180 @@ const lists = {
 //////////////////
 // Quran Player //
 //////////////////
-const playBtn = document.querySelector(".play");
-const pauseBtn = document.querySelector(".pause");
-const prevBtn = document.querySelector(".backward");
-const nextBtn = document.querySelector(".forward");
-const selectSurah = document.getElementById("surah-selector");
-const audio = document.getElementById("audio");
-let surahNumber = Number(localStorage.getItem("surahNumber")) || 112;
-selectSurah.selectedIndex = surahNumber - 1;
-let isPlaying;
+const quranPlayer = (() => {
+  const playBtn = document.querySelector(".play");
+  const pauseBtn = document.querySelector(".pause");
+  const restartBtn = document.querySelector(".restart");
+  const prevBtn = document.querySelector(".backward");
+  const nextBtn = document.querySelector(".forward");
+  const selectSurah = document.getElementById("surah-selector");
+  const audio = document.getElementById("audio");
 
-function playPause() {
-  if (!isPlaying) {
-    playBtn.classList.remove("hide");
-    pauseBtn.classList.add("hide");
-  } else {
-    playBtn.classList.add("hide");
-    pauseBtn.classList.remove("hide");
-  }
-}
+  let surahNumber = Number(localStorage.getItem("surahNumber")) || 112;
+  let ayahIndex = Number(localStorage.getItem("ayahIndex")) || 0;
 
-selectSurah.addEventListener("change", function () {
-  surahNumber = this.value;
-  playQuran(surahNumber);
-  localStorage.setItem("surahNumber", surahNumber);
-});
+  let token = 0;
+  let playing = false;
 
-function nextSurah() {
-  isPlaying = true;
-  playPause();
-  surahNumber = surahNumber < 114 ? surahNumber + 1 : 1;
   selectSurah.selectedIndex = surahNumber - 1;
-  localStorage.setItem("surahNumber", surahNumber);
-  playQuran(surahNumber);
-}
 
-let playbackToken = 0;
-async function playQuran(surahNum) {
-  const myToken = ++playbackToken; // إلغاء أي تشغيل سابق
-  isPlaying = true;
-  playPause();
+  const persist = () => {
+    localStorage.setItem("surahNumber", surahNumber);
+    localStorage.setItem("ayahIndex", ayahIndex);
+  };
 
-  try {
+  const setUI = () => {
+    playBtn.classList.toggle("hide", playing);
+    pauseBtn.classList.toggle("hide", !playing);
+  };
+
+  const waitForEnd = () =>
+    new Promise((resolve) => {
+      const onEnd = () => {
+        audio.removeEventListener("ended", onEnd);
+        resolve();
+      };
+      audio.addEventListener("ended", onEnd);
+    });
+
+  const fetchAyahs = async (num) => {
     const res = await fetch(
-      `https://api.alquran.cloud/v1/surah/${surahNum}/ar.alafasy`,
+      `https://api.alquran.cloud/v1/surah/${num}/ar.alafasy`,
     );
     const { data } = await res.json();
+    return data.ayahs;
+  };
 
-    for (const ayah of data.ayahs) {
-      if (myToken !== playbackToken) return; // أُلغي
-      audio.src = ayah.audio;
-      await audio.play();
-      const evt = await new Promise((resolve) => {
-        const clean = () => {
-          audio.removeEventListener("ended", onEnd);
-          audio.removeEventListener("pause", onPause);
-        };
-        const onEnd = () => {
-          clean();
-          resolve("ended");
-        };
-        const onPause = () => {
-          clean();
-          resolve("paused");
-        };
-        audio.addEventListener("ended", onEnd);
-        audio.addEventListener("pause", onPause);
-      });
-      if (evt === "paused" || myToken !== playbackToken) return;
+  const play = async () => {
+    const myToken = ++token;
+    playing = true;
+    setUI();
+
+    let ayahs;
+    try {
+      ayahs = await fetchAyahs(surahNumber);
+    } catch (err) {
+      console.error("Failed to fetch surah:", err);
+      if (myToken === token) {
+        playing = false;
+        setUI();
+      }
+      return;
     }
-    if (myToken !== playbackToken) return;
-    isPlaying = false;
-    playPause();
-    // ❌ حذف الاستدعاء القديم: nextSurah();
-  } catch (err) {
-    if (myToken === playbackToken) {
-      isPlaying = false;
-      playPause();
-      console.error("Quran playback failed:", err);
+
+    if (myToken !== token) return;
+    if (ayahIndex >= ayahs.length) ayahIndex = 0;
+
+    for (let i = ayahIndex; i < ayahs.length; i++) {
+      if (myToken !== token) return;
+
+      ayahIndex = i;
+      persist();
+
+      let played = false;
+      while (!played) {
+        if (myToken !== token) return;
+
+        audio.src = ayahs[i].audio;
+        audio.currentTime = 0;
+
+        try {
+          await audio.play();
+        } catch (e) {
+          console.warn("audio.play() rejected:", e);
+          if (myToken === token) {
+            playing = false;
+            setUI();
+          }
+          return;
+        }
+
+        await waitForEnd();
+        if (myToken !== token) return;
+
+        if (audio.ended) {
+          played = true;
+        } else {
+          console.warn("transient pause, retrying same ayah");
+        }
+      }
+      ayahIndex = i + 1;
+      persist();
     }
-  }
-}
 
-prevBtn.addEventListener("click", () => {
-  playbackToken++;
-  surahNumber = surahNumber > 1 ? surahNumber - 1 : 114;
-  selectSurah.selectedIndex = surahNumber - 1;
-  localStorage.setItem("surahNumber", surahNumber);
-  playQuran(surahNumber);
-});
+    if (myToken !== token) return;
+    surahNumber = surahNumber < 114 ? surahNumber + 1 : 1;
+    ayahIndex = 0;
+    persist();
+    selectSurah.selectedIndex = surahNumber - 1;
 
-nextBtn.addEventListener("click", nextSurah);
+    playing = false;
+    setUI();
+    play();
+  };
 
-playBtn.addEventListener("click", function () {
-  playQuran(surahNumber);
-});
+  const pause = () => {
+    token++;
+    audio.pause();
+    playing = false;
+    setUI();
+    persist();
+  };
 
-pauseBtn.addEventListener("click", () => {
-  playbackToken++;
-  audio.pause();
-  isPlaying = false;
-  playPause();
-});
+  const restart = () => {
+    token++;
+    audio.pause();
+    audio.currentTime = 0;
+    ayahIndex = 0;
+    persist();
+    playing = false;
+    setUI();
+    play();
+  };
+
+  const next = () => {
+    token++;
+    audio.pause();
+    surahNumber = surahNumber < 114 ? surahNumber + 1 : 1;
+    ayahIndex = 0;
+    persist();
+    selectSurah.selectedIndex = surahNumber - 1;
+    playing = false;
+    setUI();
+    play();
+  };
+
+  const prev = () => {
+    token++;
+    audio.pause();
+    surahNumber = surahNumber > 1 ? surahNumber - 1 : 114;
+    ayahIndex = 0;
+    persist();
+    selectSurah.selectedIndex = surahNumber - 1;
+    playing = false;
+    setUI();
+    play();
+  };
+
+  selectSurah.addEventListener("change", function () {
+    token++;
+    audio.pause();
+    surahNumber = Number(this.value);
+    ayahIndex = 0;
+    persist();
+    playing = false;
+    setUI();
+    play();
+  });
+
+  playBtn.addEventListener("click", play);
+  pauseBtn.addEventListener("click", pause);
+  restartBtn.addEventListener("click", restart);
+  nextBtn.addEventListener("click", next);
+  prevBtn.addEventListener("click", prev);
+
+  return { play, pause, restart, next, prev };
+})();
 
 /////////////
 // RELAXER //
