@@ -1,17 +1,19 @@
 /* Relaxer Breath Circle */
 .showRelaxer {
-  background: var(--background-color);
   position: absolute;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
-  top: 0;
+  background: var(--background-color);
   z-index: 1;
   overflow: hidden;
   display: none;
 }
-
-.show {
-  display: block;
+.showRelaxer.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .relaxerContainer {

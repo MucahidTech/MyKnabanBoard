@@ -122,18 +122,16 @@ pauseBtn.addEventListener("click", () => {
 const relaxer = document.querySelector(".relaxer");
 const showRelaxer = document.querySelector(".showRelaxer");
 
+let relaxerIntervalId = null;
 relaxer.addEventListener("click", () => {
-  showRelaxer.style.display = "flex";
-
+  showRelaxer.classList.add("show");
   const container = document.getElementById("container");
   const text = document.getElementById("relaxertext");
   const totalTime = 7500;
   const breatheTime = (totalTime / 5) * 2;
   const holdTime = totalTime / 5;
 
-  breathAnimation();
-
-  function breathAnimation() {
+  const breathAnimation = () => {
     text.innerText = "Breathe In!";
     container.className = "relaxerContainer congrow";
 
@@ -145,15 +143,17 @@ relaxer.addEventListener("click", () => {
         container.className = "relaxerContainer conshrink";
       }, holdTime);
     }, breatheTime);
-  }
-  intervalId = setInterval(breathAnimation, totalTime);
+  };
 
-  const closeRelaxer = document.querySelector(".relaxerContainer");
-  closeRelaxer.addEventListener("click", () => {
-    showRelaxer.style.display = "none";
-    clearInterval(intervalId);
-    text.innerText = "";
-  });
+  clearInterval(relaxerIntervalId);
+  breathAnimation();
+  relaxerIntervalId = setInterval(breathAnimation, totalTime);
+});
+
+document.querySelector(".relaxerContainer").addEventListener("click", () => {
+  showRelaxer.classList.remove("show");
+  clearInterval(relaxerIntervalId);
+  document.getElementById("relaxertext").innerText = "";
 });
 
 ///////////////
