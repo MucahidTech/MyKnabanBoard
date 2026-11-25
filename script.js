@@ -121,39 +121,55 @@ pauseBtn.addEventListener("click", () => {
 /////////////
 const relaxer = document.querySelector(".relaxer");
 const showRelaxer = document.querySelector(".showRelaxer");
+const relaxerContainer = document.querySelector(".relaxerContainer");
+const relaxerText = document.getElementById("relaxertext");
 
 let relaxerIntervalId = null;
+let relaxerTimeouts = [];
+
+const stopRelaxer = () => {
+  clearInterval(relaxerIntervalId);
+  relaxerIntervalId = null;
+
+  relaxerTimeouts.forEach(clearTimeout);
+  relaxerTimeouts = [];
+
+  relaxerText.innerText = "";
+  relaxerContainer.className = "relaxerContainer";
+};
+
 relaxer.addEventListener("click", () => {
+  stopRelaxer();
   showRelaxer.classList.add("show");
-  const container = document.getElementById("container");
-  const text = document.getElementById("relaxertext");
+
   const totalTime = 7500;
   const breatheTime = (totalTime / 5) * 2;
   const holdTime = totalTime / 5;
 
   const breathAnimation = () => {
-    text.innerText = "Breathe In!";
-    container.className = "relaxerContainer congrow";
+    relaxerText.innerText = "Breathe In!";
+    relaxerContainer.className = "relaxerContainer congrow";
 
-    setTimeout(() => {
-      text.innerText = "Hold";
-
+    relaxerTimeouts.push(
       setTimeout(() => {
-        text.innerText = "Breathe Out!";
-        container.className = "relaxerContainer conshrink";
-      }, holdTime);
-    }, breatheTime);
+        relaxerText.innerText = "Hold";
+        relaxerTimeouts.push(
+          setTimeout(() => {
+            relaxerText.innerText = "Breathe Out!";
+            relaxerContainer.className = "relaxerContainer conshrink";
+          }, holdTime),
+        );
+      }, breatheTime),
+    );
   };
 
-  clearInterval(relaxerIntervalId);
   breathAnimation();
   relaxerIntervalId = setInterval(breathAnimation, totalTime);
 });
 
-document.querySelector(".relaxerContainer").addEventListener("click", () => {
+relaxerContainer.addEventListener("click", () => {
   showRelaxer.classList.remove("show");
-  clearInterval(relaxerIntervalId);
-  document.getElementById("relaxertext").innerText = "";
+  stopRelaxer();
 });
 
 ///////////////
