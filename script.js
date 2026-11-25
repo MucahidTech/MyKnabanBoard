@@ -10,6 +10,14 @@ const lists = {
   listFinish: listFinish,
 };
 
+const debounce = (fn, ms = 300) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+};
+
 //////////////////
 // Quran Player //
 //////////////////
@@ -260,13 +268,15 @@ const addTask = (id, value, listType) => {
   p.setAttribute("contenteditable", "true");
   p.textContent = value || "Empty Task";
 
-  p.addEventListener("input", (e) => {
+  const persistEdit = debounce((newText) => {
     if (!(listType in lists)) return;
     const updated = readList(listType).map((c) =>
-      c.id === id ? { ...c, value: e.target.textContent.trim() } : c,
+      c.id === id ? { ...c, value: newText } : c,
     );
     writeList(listType, updated);
-  });
+  }, 300);
+
+  p.addEventListener("input", (e) => persistEdit(e.target.textContent.trim()));
 
   const iconsCon = document.createElement("div");
   iconsCon.className = "iconsCon";
