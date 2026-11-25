@@ -149,6 +149,19 @@ const addTask = (id, value) => {
   p.setAttribute("contenteditable", "true");
   p.textContent = value || "Empty Task";
 
+  p.addEventListener("input", (e) => {
+    const updatedText = e.target.textContent.trim();
+    const cardId = newTaskElement.dataset.id;
+    const listType = newTaskElement.closest("ul").classList[1];
+
+    const stored = JSON.parse(localStorage.getItem(listType) || "[]");
+    const updated = stored.map((card) =>
+      card.id === cardId ? { ...card, value: updatedText } : card,
+    );
+    localStorage.setItem(listType, JSON.stringify(updated));
+    lists[listType] = updated;
+  });
+
   const iconsCon = document.createElement("div");
   iconsCon.className = "iconsCon";
   iconsCon.innerHTML = `<ion-icon name="close-circle-outline" class="icon deleteIcn"></ion-icon>`;
@@ -166,23 +179,6 @@ main.addEventListener("click", function (e) {
   const currentList = clickON.closest(".listcontainer").querySelector("ul");
   const listType = currentList.classList[1];
   // console.log(currentList, listType); // PROBLEM HERE WHEN CLICK ON EMPTY
-
-  if (clickON.classList.contains("btn-addTask")) {
-    e.preventDefault();
-    const id = (Math.random() * 201).toFixed(5);
-    const newTask = {
-      id: id,
-      value: "New Task",
-    };
-
-    // Adding to objects Array for Local Storage
-    currentList.appendChild(addTask(newTask.id, newTask.value));
-    if (listType in lists) {
-      lists[listType].push(newTask);
-      localStorage.setItem(`${listType}`, JSON.stringify(lists[listType]));
-      console.log("New Item Added to local list");
-    }
-  }
 
   /////////////////
   // Delete Task //
