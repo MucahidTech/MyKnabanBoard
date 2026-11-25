@@ -172,13 +172,14 @@ const addTask = (id, value) => {
 
 main.addEventListener("click", function (e) {
   const clickON = e.target;
+  const listContainer = clickON.closest(".listcontainer");
+  if (!listContainer) return;
 
   //////////////
   // ADD Task //
   //////////////
   const currentList = clickON.closest(".listcontainer").querySelector("ul");
   const listType = currentList.classList[1];
-  // console.log(currentList, listType); // PROBLEM HERE WHEN CLICK ON EMPTY
 
   /////////////////
   // Delete Task //
