@@ -48,26 +48,51 @@ function nextSurah() {
   playQuran(surahNumber);
 }
 
+let playbackToken = 0;
 async function playQuran(surahNum) {
+  const myToken = ++playbackToken; // إلغاء أي تشغيل سابق
   isPlaying = true;
-  const response = await fetch(
-    `https://api.alquran.cloud/v1/surah/${surahNum}/ar.alafasy`,
-  );
-  const surah = await response.json();
-  const ayahs = surah.data.ayahs;
   playPause();
 
-  for (const ayah of ayahs) {
-    audio.src = ayah.audio;
-    audio.controls = true;
-    await audio.play();
-    await new Promise((resolve) => {
-      audio.addEventListener("ended", resolve);
-    });
+  try {
+    const res = await fetch(
+      `https://api.alquran.cloud/v1/surah/${surahNum}/ar.alafasy`,
+    );
+    const { data } = await res.json();
+
+    for (const ayah of data.ayahs) {
+      if (myToken !== playbackToken) return; // أُلغي
+      audio.src = ayah.audio;
+      await audio.play();
+      const evt = await new Promise((resolve) => {
+        const clean = () => {
+          audio.removeEventListener("ended", onEnd);
+          audio.removeEventListener("pause", onPause);
+        };
+        const onEnd = () => {
+          clean();
+          resolve("ended");
+        };
+        const onPause = () => {
+          clean();
+          resolve("paused");
+        };
+        audio.addEventListener("ended", onEnd);
+        audio.addEventListener("pause", onPause);
+      });
+      if (evt === "paused" || myToken !== playbackToken) return;
+    }
+    if (myToken !== playbackToken) return;
+    isPlaying = false;
+    playPause();
+    // ❌ حذف الاستدعاء القديم: nextSurah();
+  } catch (err) {
+    if (myToken === playbackToken) {
+      isPlaying = false;
+      playPause();
+      console.error("Quran playback failed:", err);
+    }
   }
-  isPlaying = false;
-  playPause();
-  nextSurah();
 }
 
 prevBtn.addEventListener("click", function () {
@@ -84,7 +109,8 @@ playBtn.addEventListener("click", function () {
   playQuran(surahNumber);
 });
 
-pauseBtn.addEventListener("click", function () {
+pauseBtn.addEventListener("click", () => {
+  playbackToken++;
   audio.pause();
   isPlaying = false;
   playPause();
