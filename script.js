@@ -249,7 +249,7 @@ relaxerContainer.addEventListener("click", () => {
 ///////////////
 const main = document.querySelector("main");
 
-const addTask = (id, value) => {
+const addTask = (id, value, listType) => {
   const newTaskElement = document.createElement("li");
   newTaskElement.className = "newTask flex";
   newTaskElement.setAttribute("data-id", `${id}`);
@@ -261,16 +261,11 @@ const addTask = (id, value) => {
   p.textContent = value || "Empty Task";
 
   p.addEventListener("input", (e) => {
-    const updatedText = e.target.textContent.trim();
-    const cardId = newTaskElement.dataset.id;
-    const listType = newTaskElement.closest("ul").classList[1];
-
-    const stored = JSON.parse(localStorage.getItem(listType) || "[]");
-    const updated = stored.map((card) =>
-      card.id === cardId ? { ...card, value: updatedText } : card,
+    if (!(listType in lists)) return;
+    const updated = readList(listType).map((c) =>
+      c.id === id ? { ...c, value: e.target.textContent.trim() } : c,
     );
-    localStorage.setItem(listType, JSON.stringify(updated));
-    lists[listType] = updated;
+    writeList(listType, updated);
   });
 
   const iconsCon = document.createElement("div");
@@ -299,12 +294,10 @@ main.addEventListener("click", function (e) {
       id: (Math.random() * 201).toFixed(5),
       value: "New Task",
     };
-
-    currentList.appendChild(addTask(newTask.id, newTask.value));
-    if (listType in lists) {
-      lists[listType].push(newTask);
-      localStorage.setItem(listType, JSON.stringify(lists[listType]));
-    }
+    const arr = readList(listType);
+    arr.push(newTask);
+    writeList(listType, arr);
+    currentList.appendChild(addTask(newTask.id, newTask.value, listType));
     return;
   }
 
@@ -313,24 +306,12 @@ main.addEventListener("click", function (e) {
   /////////////////
   if (clickON.classList.contains("deleteIcn")) {
     const clickedTask = clickON.closest(".newTask");
-    const cardId = clickedTask.dataset.id;
-    const cardValue = clickedTask.querySelector(".taskInput").innerHTML;
-
-    const storedCardsArray = localStorage.getItem(`${listType}`);
-    const cards = storedCardsArray ? JSON.parse(storedCardsArray) : [];
-    const Updatedcards = cards.filter((c) => c.id !== cardId);
-
-    lists[listType] = Updatedcards;
-    if (Updatedcards.length === 0) {
-      localStorage.removeItem(`${listType}`);
-    } else {
-      localStorage.setItem(`${listType}`, JSON.stringify(Updatedcards));
-    }
-
-    clickedTask.remove();
-    console.log(
-      `Task with id ${cardId} and content of: " ${cardValue} " have been removed successfully`,
+    const id = clickedTask.dataset.id;
+    writeList(
+      listType,
+      readList(listType).filter((c) => c.id !== id),
     );
+    clickedTask.remove();
   }
 });
 
@@ -361,63 +342,67 @@ listsC.forEach((list) => {
   list.addEventListener("dragleave", function () {
     list.classList.remove("overLi");
   });
-
-  list.addEventListener("drop", function () {
-    if (!draggedTask) return;
+  list.addEventListener("drop", function (e) {
+    e.preventDefault();
     list.classList.remove("overLi");
+    if (!draggedTask || !draggedTask.isConnected) return;
 
     const fromList = draggedTask.closest("ul").classList[1];
-    const toList = list.querySelector(".list").classList[1];
+    const toUL = list.querySelector(".list");
+    const toList = toUL.classList[1];
 
-    list.querySelector(".list").append(draggedTask);
-
-    if (fromList === toList) return;
-    const taskId = draggedTask.dataset.id;
-    const taskVal = draggedTask.querySelector("p").textContent;
-
-    const dest = JSON.parse(localStorage.getItem(toList) || "[]");
-    dest.push({ id: taskId, value: taskVal });
-    lists[toList] = dest;
-    localStorage.setItem(toList, JSON.stringify(dest));
-
-    const src = JSON.parse(localStorage.getItem(fromList) || "[]").filter(
-      (c) => c.id !== taskId,
+    const afterEl = [...toUL.querySelectorAll("li:not(.filmy)")].find(
+      (li) => e.clientY < li.getBoundingClientRect().top + li.offsetHeight / 2,
     );
-    lists[fromList] = src;
-    src.length
-      ? localStorage.setItem(fromList, JSON.stringify(src))
-      : localStorage.removeItem(fromList);
+
+    afterEl
+      ? toUL.insertBefore(draggedTask, afterEl)
+      : toUL.appendChild(draggedTask);
+    draggedTask.classList.remove("filmy");
+
+    const snapshot = (ul) =>
+      [...ul.children].map((li) => ({
+        id: li.dataset.id,
+        value: li.querySelector("p").textContent,
+      }));
+
+    if (fromList === toList) {
+      writeList(toList, snapshot(toUL));
+      return;
+    }
+
+    writeList(toList, snapshot(toUL));
+
+    const fromUL = document.querySelector(`.${fromList}`);
+    writeList(fromList, snapshot(fromUL));
   });
 });
 
 ///////////////////
 // Local Storage //
 ///////////////////
-const storedArray = (list) => {
-  const currentList = document.querySelector(`.${list}`);
+const readList = (list) => JSON.parse(localStorage.getItem(list) || "[]");
 
-  const storedCardsArray = localStorage.getItem(list);
-  if (storedCardsArray) {
-    const parsedCardsArray = JSON.parse(storedCardsArray);
-    parsedCardsArray.forEach((card) => {
-      let id = card.id;
-      let value = card.value;
-      currentList.appendChild(addTask(id, value));
-      const newTask = {
-        id: id,
-        value: value,
-      };
-      lists[list].push(newTask);
-    });
-  }
+const writeList = (list, arr) => {
+  arr.forEach((card, i) => {
+    card.order = i;
+  });
+  lists[list] = arr;
+  arr.length
+    ? localStorage.setItem(list, JSON.stringify(arr))
+    : localStorage.removeItem(list);
 };
 
-for (const list in lists) {
-  storedArray(list);
-  console.log(
-    `${list} elements have parsed successfully from your Local Storage`,
-  );
-}
+const renderList = (list) => {
+  const ul = document.querySelector(`.${list}`);
+  ul.innerHTML = "";
+  readList(list)
+    .sort((a, b) => a.order - b.order)
+    .forEach((card) => ul.appendChild(addTask(card.id, card.value, list)));
+  lists[list] = readList(list);
+};
+
+for (const list in lists) renderList(list);
 
 /////////////////
 // Time & Date //
