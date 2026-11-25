@@ -10,6 +10,9 @@ const lists = {
   listFinish: listFinish,
 };
 
+/////////////////////
+// Shared Helpers  //
+/////////////////////
 const debounce = (fn, ms = 300) => {
   let t;
   return (...args) => {
@@ -17,6 +20,14 @@ const debounce = (fn, ms = 300) => {
     t = setTimeout(() => fn(...args), ms);
   };
 };
+
+const activateOnEnter = (el, handler) =>
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handler(e);
+    }
+  });
 
 //////////////////
 // Quran Player //
@@ -193,6 +204,15 @@ const quranPlayer = (() => {
   nextBtn.addEventListener("click", next);
   prevBtn.addEventListener("click", prev);
 
+  // ─── Keyboard accessibility ───
+  [
+    [playBtn, play],
+    [pauseBtn, pause],
+    [restartBtn, restart],
+    [nextBtn, next],
+    [prevBtn, prev],
+  ].forEach(([btn, action]) => activateOnEnter(btn, action));
+
   return { play, pause, restart, next, prev };
 })();
 
@@ -250,6 +270,18 @@ relaxer.addEventListener("click", () => {
 relaxerContainer.addEventListener("click", () => {
   showRelaxer.classList.remove("show");
   stopRelaxer();
+});
+
+// ─── Keyboard accessibility ───
+activateOnEnter(relaxer, () => relaxer.click());
+activateOnEnter(relaxerContainer, () => relaxerContainer.click());
+
+// Escape to close relaxer
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && showRelaxer.classList.contains("show")) {
+    showRelaxer.classList.remove("show");
+    stopRelaxer();
+  }
 });
 
 ///////////////
@@ -325,6 +357,30 @@ main.addEventListener("click", function (e) {
   }
 });
 
+/////////////////////////
+// Keyboard: Task Ops  //
+/////////////////////////
+main.addEventListener("keydown", function (e) {
+  // Enter/Space على زر +Add
+  if (e.key === "Enter" || e.key === " ") {
+    const btn = e.target.closest(".btn-addTask");
+    if (btn) {
+      e.preventDefault();
+      btn.click();
+      return;
+    }
+  }
+
+  // Delete/Backspace
+  if (e.key === "Delete" || e.key === "Backspace") {
+    const li = e.target.closest(".newTask");
+    if (!li || !e.target.matches(".taskInput")) return;
+    if (e.target.textContent.trim() !== "") return;
+    e.preventDefault();
+    li.querySelector(".deleteIcn").click();
+  }
+});
+
 /////////////////
 // Drag & Drop //
 /////////////////
@@ -352,6 +408,7 @@ listsC.forEach((list) => {
   list.addEventListener("dragleave", function () {
     list.classList.remove("overLi");
   });
+
   list.addEventListener("drop", function (e) {
     e.preventDefault();
     list.classList.remove("overLi");
@@ -446,5 +503,3 @@ function updateDateAndTime() {
 updateDateAndTime();
 // Updating Every Second
 setInterval(updateDateAndTime, 1000);
-
-/////////////////

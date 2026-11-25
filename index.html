@@ -28,16 +28,27 @@
   </head>
   <body class="flex">
     <!-- Relaxer -->
-    <div class="showRelaxer">
-      <div id="container" class="relaxerContainer">
-        <div class="circle flex"></div>
-        <p id="relaxertext"></p>
+    <div
+      class="showRelaxer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Breathing exercise. Press Escape to close."
+    >
+      <div
+        id="container"
+        class="relaxerContainer"
+        role="button"
+        tabindex="0"
+        aria-label="Breathing exercise. Click or press Enter to close."
+      >
+        <div class="circle flex" aria-hidden="true"></div>
+        <p id="relaxertext" aria-live="polite"></p>
 
-        <div class="pointer-container">
+        <div class="pointer-container" aria-hidden="true">
           <span class="pointer"></span>
         </div>
 
-        <div class="gradient-circle"></div>
+        <div class="gradient-circle" aria-hidden="true"></div>
       </div>
     </div>
     <section class="container">
@@ -45,20 +56,32 @@
       <header class="header flex">
         <div class="timeAndDate flex">
           <div class="taD">
-            <ion-icon name="alarm-outline" class="icon timeicn"></ion-icon>
-            <p id="current-time">12:12:12</p>
+            <ion-icon
+              name="alarm-outline"
+              class="icon timeicn"
+              aria-hidden="true"
+            ></ion-icon>
+            <p id="current-time" aria-label="Current time">12:12:12</p>
           </div>
           <div class="taD">
-            <ion-icon name="calendar-outline" class="icon dateicn"></ion-icon>
-            <p id="current-date">01/01/2001</p>
+            <ion-icon
+              name="calendar-outline"
+              class="icon dateicn"
+              aria-hidden="true"
+            ></ion-icon>
+            <p id="current-date" aria-label="Current date">01/01/2001</p>
           </div>
         </div>
         <h1 class="headLine">Mujahed Kanban Board</h1>
-        <div class="Qplayer">
-          <img src="img/Qimg.png" alt="Quran image" class="Qimg" />
+        <div class="Qplayer" role="region" aria-label="Quran player">
+          <img src="img/Qimg.png" alt="" class="Qimg" aria-hidden="true" />
           <div class="surahContainer">
             <audio id="audio" class="hide"></audio>
-            <select id="surah-selector" class="select">
+            <select
+              id="surah-selector"
+              class="select"
+              aria-label="Select Quran surah"
+            >
               <option value="1">1. Al-Faatiha</option>
               <option value="2">2. Al-Baqarah</option>
               <option value="3">3. Aale 'Imran</option>
@@ -175,23 +198,41 @@
               <option value="114">114. An-Naas</option>
             </select>
           </div>
-          <div class="icons flex">
+          <div class="icons flex" role="group" aria-label="Playback controls">
             <ion-icon
               name="play-skip-back-circle-outline"
               class="icon backward"
+              role="button"
+              tabindex="0"
+              aria-label="Previous surah"
             ></ion-icon>
-            <ion-icon name="play-circle-outline" class="icon play"></ion-icon>
+            <ion-icon
+              name="play-circle-outline"
+              class="icon play"
+              role="button"
+              tabindex="0"
+              aria-label="Play"
+            ></ion-icon>
             <ion-icon
               name="pause-circle-outline"
               class="icon pause hide"
+              role="button"
+              tabindex="0"
+              aria-label="Pause"
             ></ion-icon>
             <ion-icon
               name="play-skip-forward-circle-outline"
               class="icon forward"
+              role="button"
+              tabindex="0"
+              aria-label="Next surah"
             ></ion-icon>
             <ion-icon
               name="refresh-circle-outline"
               class="icon restart"
+              role="button"
+              tabindex="0"
+              aria-label="Restart surah from beginning"
             ></ion-icon>
           </div>
         </div>
@@ -202,20 +243,38 @@
       <main class="lists flex">
         <div class="listcontainer">
           <h2 class="secondaryHeadLine">To Do</h2>
-          <ul class="list listNew"></ul>
-          <button id="btn-new" class="btn btn-addTask">+Add</button>
+          <ul class="list listNew" aria-label="To Do tasks"></ul>
+          <button
+            id="btn-new"
+            class="btn btn-addTask"
+            aria-label="Add task to To Do"
+          >
+            +Add
+          </button>
         </div>
 
         <div class="listcontainer">
           <h2 class="secondaryHeadLine">In Progress</h2>
-          <ul class="list listWorking"></ul>
-          <button id="btn-working" class="btn btn-addTask">+Add</button>
+          <ul class="list listWorking" aria-label="In Progress tasks"></ul>
+          <button
+            id="btn-working"
+            class="btn btn-addTask"
+            aria-label="Add task to In Progress"
+          >
+            +Add
+          </button>
         </div>
 
         <div class="listcontainer">
           <h2 class="secondaryHeadLine">Completed</h2>
-          <ul class="list listFinish"></ul>
-          <button id="btn-completed" class="btn btn-addTask">+Add</button>
+          <ul class="list listFinish" aria-label="Completed tasks"></ul>
+          <button
+            id="btn-completed"
+            class="btn btn-addTask"
+            aria-label="Add task to Completed"
+          >
+            +Add
+          </button>
         </div>
       </main>
 
@@ -227,7 +286,13 @@
             Best!
           </p>
         </div>
-        <button class="btn relaxer">RelaxeR</button>
+        <button
+          class="btn relaxer"
+          aria-label="Open breathing relaxer"
+          aria-haspopup="dialog"
+        >
+          RelaxeR
+        </button>
       </aside>
     </section>
 
@@ -238,15 +303,33 @@
           <strong>Mujahed</strong>
         </a>
       </p>
-      <div class="social">
-        <a href="https://www.linkedin.com/in/mucahid-developer/">
-          <ion-icon name="logo-linkedin" class="icon socialicn"></ion-icon>
+      <div class="social" role="group" aria-label="Social links">
+        <a
+          href="https://www.linkedin.com/in/mucahid-developer/"
+          aria-label="LinkedIn profile"
+        >
+          <ion-icon
+            name="logo-linkedin"
+            class="icon socialicn"
+            aria-hidden="true"
+          ></ion-icon>
         </a>
-        <a href="https://github.com/MucahidDeveloper">
-          <ion-icon name="logo-github" class="icon socialicn"></ion-icon>
+        <a
+          href="https://github.com/MucahidDeveloper"
+          aria-label="GitHub profile"
+        >
+          <ion-icon
+            name="logo-github"
+            class="icon socialicn"
+            aria-hidden="true"
+          ></ion-icon>
         </a>
-        <a href="https://twitter.com/MujDeveloper">
-          <ion-icon name="logo-twitter" class="icon socialicn"></ion-icon>
+        <a href="https://twitter.com/MujDeveloper" aria-label="Twitter profile">
+          <ion-icon
+            name="logo-twitter"
+            class="icon socialicn"
+            aria-hidden="true"
+          ></ion-icon>
         </a>
       </div>
     </footer>
