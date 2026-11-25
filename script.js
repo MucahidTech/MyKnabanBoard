@@ -159,9 +159,6 @@ document.querySelector(".relaxerContainer").addEventListener("click", () => {
 ///////////////
 // ADD Tasks //
 ///////////////
-const btnNew = document.getElementById("btn-new");
-const btnWorking = document.getElementById("btn-working");
-const btnComplete = document.getElementById("btn-Complete");
 const main = document.querySelector("main");
 
 const addTask = (id, value) => {
@@ -253,22 +250,17 @@ main.addEventListener("click", function (e) {
 // Drag & Drop //
 /////////////////
 let draggedTask;
-let currentList;
-let cardId;
-let cardValue;
 
 main.addEventListener("dragstart", function (e) {
   draggedTask = e.target.closest("li");
-  currentList = draggedTask.closest("ul").classList[1];
-  cardId = draggedTask.dataset.id;
-  cardValue = draggedTask.querySelector("p").textContent;
   draggedTask.classList.add("filmy");
 });
 
 main.addEventListener("dragend", function (e) {
-  const draggedTask = e.target.closest("li");
-  draggedTask.classList.remove("filmy");
-  draggedTask.closest(".listcontainer").classList.remove("overLi");
+  const t = e.target.closest("li");
+  if (!t) return;
+  t.classList.remove("filmy");
+  t.closest(".listcontainer")?.classList.remove("overLi");
 });
 
 const listsC = document.querySelectorAll(".listcontainer");
@@ -276,7 +268,6 @@ listsC.forEach((list) => {
   list.addEventListener("dragover", function (e) {
     e.preventDefault();
     list.classList.add("overLi");
-    newList = list;
   });
 
   list.addEventListener("dragleave", function () {
@@ -284,35 +275,30 @@ listsC.forEach((list) => {
   });
 
   list.addEventListener("drop", function () {
+    if (!draggedTask) return;
     list.classList.remove("overLi");
+
+    const fromList = draggedTask.closest("ul").classList[1];
+    const toList = list.querySelector(".list").classList[1];
+
     list.querySelector(".list").append(draggedTask);
-    const listType = list.querySelector(".list").classList[1];
 
-    if (currentList !== listType) {
-      // Update The New List
-      if (listType in lists) {
-        const transportedTask = {
-          id: cardId,
-          value: cardValue,
-        };
-        lists[listType].push(transportedTask);
-        localStorage.setItem(`${listType}`, JSON.stringify(lists[listType]));
+    if (fromList === toList) return;
+    const taskId = draggedTask.dataset.id;
+    const taskVal = draggedTask.querySelector("p").textContent;
 
-        // Remove Task From The Old List
-        const storedCardsArray = localStorage.getItem(`${currentList}`);
-        const cards = JSON.parse(storedCardsArray);
-        const Updatedcards = cards.filter((card) => card.id !== cardId);
-        if (Updatedcards.length === 0) {
-          localStorage.removeItem(`${currentList}`);
-          lists[currentList] = [];
-        }
-        localStorage.setItem(`${currentList}`, JSON.stringify(Updatedcards));
-        lists[currentList] = Updatedcards;
-        console.log(
-          `The Task: "${cardValue}" moved from ${currentList} to ${listType} Successfully`,
-        );
-      }
-    }
+    const dest = JSON.parse(localStorage.getItem(toList) || "[]");
+    dest.push({ id: taskId, value: taskVal });
+    lists[toList] = dest;
+    localStorage.setItem(toList, JSON.stringify(dest));
+
+    const src = JSON.parse(localStorage.getItem(fromList) || "[]").filter(
+      (c) => c.id !== taskId,
+    );
+    lists[fromList] = src;
+    src.length
+      ? localStorage.setItem(fromList, JSON.stringify(src))
+      : localStorage.removeItem(fromList);
   });
 });
 
