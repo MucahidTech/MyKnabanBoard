@@ -201,11 +201,27 @@ main.addEventListener("click", function (e) {
   const listContainer = clickON.closest(".listcontainer");
   if (!listContainer) return;
 
+  const currentList = listContainer.querySelector("ul");
+  const listType = currentList.classList[1];
+
   //////////////
   // ADD Task //
   //////////////
-  const currentList = clickON.closest(".listcontainer").querySelector("ul");
-  const listType = currentList.classList[1];
+  if (clickON.classList.contains("btn-addTask")) {
+    e.preventDefault();
+
+    const newTask = {
+      id: (Math.random() * 201).toFixed(5),
+      value: "New Task",
+    };
+
+    currentList.appendChild(addTask(newTask.id, newTask.value));
+    if (listType in lists) {
+      lists[listType].push(newTask);
+      localStorage.setItem(listType, JSON.stringify(lists[listType]));
+    }
+    return;
+  }
 
   /////////////////
   // Delete Task //
